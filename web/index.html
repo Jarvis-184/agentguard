@@ -37,13 +37,14 @@
   <h2>Job log</h2>
   <div class="card" id="jobs">Loading…</div>
 </main>
+<script src="data.js"></script>
 <script type="module">
 const short = (a) => a ? a.slice(0, 8) + "…" + a.slice(-6) : "—";
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 let data;
 try {
-  data = await (await fetch("data.json", { cache: "no-store" })).json();
+  data = window.AGENTGUARD_SNAPSHOT ?? (await (await fetch("data.json", { cache: "no-store" })).json());
 } catch {
   data = null;
 }

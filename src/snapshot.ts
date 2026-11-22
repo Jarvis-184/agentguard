@@ -43,7 +43,7 @@ const transferEvent = parseAbiItem(
   "event Transfer(address indexed from, address indexed to, uint256 value)",
 );
 const latest = await client.getBlockNumber();
-const fromBlock = latest > 200_000n ? latest - 200_000n : 0n;
+const fromBlock = latest > 9_500n ? latest - 9_500n : 0n;
 const logs = await client.getLogs({
   address: PAY_TOKEN,
   event: transferEvent,
@@ -68,9 +68,7 @@ const jobs = existsSync("jobs.jsonl")
   ? readFileSync("jobs.jsonl", "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l))
   : [];
 
-writeFileSync(
-  "web/data.json",
-  JSON.stringify(
+const payload = JSON.stringify(
     {
       wallet,
       agent: AGENT_IDENTITY,
@@ -81,6 +79,7 @@ writeFileSync(
     },
     null,
     2,
-  ),
-);
+  );
+writeFileSync("web/data.json", payload);
+writeFileSync("web/data.js", "window.AGENTGUARD_SNAPSHOT = " + payload + ";\n");
 console.log("web/data.json written:", payments.length, "payments,", jobs.length, "job log entries");
