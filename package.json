@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "provision": "tsx src/provision.ts",
-    "agent": "tsx src/agent.ts"
+    "agent": "tsx src/agent.ts",
+    "snapshot": "tsx src/snapshot.ts",
+    "simulate": "tsx src/simulate.ts"
   },
   "dependencies": {
     "@altananetwork/sdk": "^1.1.0",
