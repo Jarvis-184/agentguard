@@ -4,7 +4,7 @@
  *
  * Usage: npm run agent
  */
-import { createClient } from "@altananetwork/sdk";
+import { createClient, signerFromPrivateKey, deserializeSession } from "@altananetwork/sdk";
 import { readFileSync, appendFileSync, existsSync } from "node:fs";
 import {
   CHAINS,
@@ -12,12 +12,17 @@ import {
   DAILY_CAP_USDT,
   SESSION_DAYS,
   ALLOWED_CALLS,
+  JOB_API_URL,
+  JOB_BODY,
 } from "./config.js";
 import { checkJob, type Policy } from "./guard.js";
 
-const { session, wallet } = JSON.parse(readFileSync("session.json", "utf8"));
+const stored = JSON.parse(readFileSync("session.json", "utf8"));
+const sessionPk = readFileSync(".agent_session_key", "utf8").trim() as `0x${string}`;
+const session = deserializeSession(stored, signerFromPrivateKey(sessionPk));
+const wallet = stored.walletAddress;
 const client = createClient({ chains: CHAINS });
-const jobUrl = process.env.JOB_API_URL as string;
+const jobUrl = JOB_API_URL;
 
 const policy: Policy = {
   allowedContracts: ALLOWED_CALLS.map((c) => c.to.toLowerCase()),
@@ -41,7 +46,11 @@ if (!decision.ok) {
   process.exit(1);
 }
 
-const res = await client.fetchWithX402({ session, url: jobUrl });
+const res = await client.fetchWithX402({
+  session,
+  url: jobUrl,
+  init: { method: "POST", headers: { "content-type": "application/json" }, body: JOB_BODY },
+});
 const body = await res.text();
 appendFileSync(
   "jobs.jsonl",

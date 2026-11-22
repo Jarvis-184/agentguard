@@ -3,3 +3,8 @@ dist/
 .env
 session.json
 jobs.jsonl
+faucet_key.txt
+_helper_key
+.helper_key
+.helper2_key
+.agent_session_key
