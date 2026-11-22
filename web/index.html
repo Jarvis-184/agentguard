@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AgentGuard — agent activity dashboard</title>
+<style>
+  :root { color-scheme: dark; --bg:#0b0e11; --card:#14181d; --line:#232a31; --fg:#e8edf1; --dim:#8b98a5; --ok:#35c26e; --no:#e5534b; --accent:#fbcc5c; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.55 system-ui, sans-serif; }
+  main { max-width: 880px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); margin: 36px 0 10px; }
+  .sub { color: var(--dim); margin: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-top: 12px; }
+  .row { display:flex; justify-content:space-between; gap:12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .mono { font-family: ui-monospace, Menlo, monospace; font-size: 13px; word-break: break-all; }
+  .pill { font-size: 12px; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+  .ok { background: rgba(53,194,110,.14); color: var(--ok); }
+  .no { background: rgba(229,83,75,.14); color: var(--no); }
+  a { color: var(--accent); text-decoration: none; }
+  .empty { color: var(--dim); padding: 12px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>AgentGuard</h1>
+  <p class="sub">Scoped spending authority and a public activity log for an AI agent on Celo.</p>
+
+  <h2>Policy</h2>
+  <div class="card" id="policy">Loading…</div>
+
+  <h2>Onchain payments</h2>
+  <div class="card" id="payments">Loading…</div>
+
+  <h2>Job log</h2>
+  <div class="card" id="jobs">Loading…</div>
+</main>
+<script type="module">
+const short = (a) => a ? a.slice(0, 8) + "…" + a.slice(-6) : "—";
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let data;
+try {
+  data = await (await fetch("data.json", { cache: "no-store" })).json();
+} catch {
+  data = null;
+}
+
+const policyEl = document.getElementById("policy");
+if (!data) {
+  policyEl.innerHTML = `<div class="empty">No snapshot yet. Run <span class="mono">npm run snapshot</span> after the wallet is provisioned.</div>`;
+  document.getElementById("payments").innerHTML = "";
+  document.getElementById("jobs").innerHTML = "";
+} else {
+  policyEl.innerHTML = `
+    <div class="row"><span>Agent</span><strong>${esc(data.agent.name)}</strong></div>
+    <div class="row"><span>Wallet</span><span class="mono"><a href="https://celoscan.io/address/${data.wallet}" target="_blank" rel="noopener">${short(data.wallet)}</a></span></div>
+    <div class="row"><span>ERC-8004 identity</span><span class="pill ${data.erc8004Agents > 0 ? "ok" : "no"}">${data.erc8004Agents > 0 ? "registered" : "not yet"}</span></div>
+    <div class="row"><span>Snapshot</span><span class="mono">${esc(data.generatedAt)}</span></div>`;
+
+  const payEl = document.getElementById("payments");
+  payEl.innerHTML = data.payments.length
+    ? data.payments.slice().reverse().map((p) => `
+      <div class="row">
+        <span class="mono"><a href="https://celoscan.io/tx/${p.hash}" target="_blank" rel="noopener">${short(p.hash)}</a></span>
+        <span>${esc(p.amountUsdt)} USD₮</span>
+        <span class="pill ${p.tagged ? "ok" : "no"}">${p.tagged ? "tagged" : "untagged"}</span>
+      </div>`).join("")
+    : `<div class="empty">No payments yet.</div>`;
+
+  const jobEl = document.getElementById("jobs");
+  jobEl.innerHTML = data.jobs.length
+    ? data.jobs.slice().reverse().map((j) => `
+      <div class="row">
+        <span class="mono">${esc(j.decision?.checkedAt ?? j.paidAt ?? "")}</span>
+        <span>${esc(j.decision?.reason ?? ("paid, status " + j.status))}</span>
+        ${j.decision ? `<span class="pill ${j.decision.ok ? "ok" : "no"}">${j.decision.ok ? "allow" : "deny"}</span>` : ""}
+      </div>`).join("")
+    : `<div class="empty">No jobs logged yet.</div>`;
+}
+</script>
+</body>
+</html>
