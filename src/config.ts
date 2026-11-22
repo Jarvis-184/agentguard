@@ -1,20 +1,24 @@
-import { CELO } from "@altananetwork/sdk";
+import { CELO, CELO_SEPOLIA } from "@altananetwork/sdk";
 
-// Celo mainnet token: USD₮ (Tether USD on Celo), 6 decimals.
+// Network switch: "sepolia" for the free sandbox build, "celo" for the scored mainnet entry.
+export const NETWORK = (process.env.AGENTGUARD_NETWORK ?? "sepolia") as "sepolia" | "celo";
+export const CHAINS = NETWORK === "celo" ? [CELO] : [CELO_SEPOLIA];
+
+// USD₮ on Celo mainnet (6 decimals). Sandbox pays in test USDC on Celo Sepolia.
 export const USDT_CELO = "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e" as const;
+export const USDC_SEPOLIA = "0x01C5C0122039549AD1493B8220cABEdD739BC44E" as const;
+export const PAY_TOKEN = NETWORK === "celo" ? USDT_CELO : USDC_SEPOLIA;
 
-export const CHAINS = [CELO];
+// Paid job endpoint: buy gateway. Sandbox = same prices, test funds.
+export const JOB_API_URL =
+  process.env.JOB_API_URL ?? "https://gateway.usebuy.ai/v1/social/youtube/videos/search";
+export const JOB_BODY = JSON.stringify({ query: "celo crypto" });
 
-// One day in seconds; the session expires after SESSION_DAYS days.
+// Session policy.
 export const SESSION_DAYS = 14;
+export const DAILY_CAP_USDT = 500_000n; // 0.50 in 6-decimal base units
 
-// Daily spend cap for the agent, in USD₮ base units (6 decimals). 0.50 USD₮/day.
-export const DAILY_CAP_USDT = 500_000n;
-
-// Contracts the session key may call. Filled at provision time:
-// the x402 payment rail settles through Permit2 / token authorization,
-// so the allowlist covers the token contract itself.
-export const ALLOWED_CALLS = [{ to: USDT_CELO }];
+export const ALLOWED_CALLS = [{ to: PAY_TOKEN }];
 
 export const AGENT_IDENTITY = {
   name: "AgentGuard Sentinel",

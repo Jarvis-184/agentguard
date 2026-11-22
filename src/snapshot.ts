@@ -5,21 +5,23 @@
  * Usage: AGENT_WALLET=0x... npm run snapshot
  */
 import { createPublicClient, http, parseAbiItem, formatUnits } from "viem";
-import { celo } from "viem/chains";
+import { celo, celoSepolia } from "viem/chains";
 import { writeFileSync, readFileSync, existsSync } from "node:fs";
-import { USDT_CELO, AGENT_IDENTITY } from "./config.js";
+import { NETWORK, PAY_TOKEN, AGENT_IDENTITY } from "./config.js";
 import { ATTRIBUTION_SUFFIX } from "./tags.js";
 
 const wallet = process.env.AGENT_WALLET as `0x${string}`;
 if (!wallet) throw new Error("AGENT_WALLET env var required");
 
 const client = createPublicClient({
-  chain: celo,
-  transport: http("https://forno.celo.org"),
+  chain: NETWORK === "celo" ? celo : celoSepolia,
+  transport: http(NETWORK === "celo" ? "https://forno.celo.org" : "https://forno.celo-sepolia.celo-testnet.org"),
 });
 
 // ERC-8004 identity: does this wallet own an agent in the registry?
-const REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
+const REGISTRY = (NETWORK === "celo"
+  ? "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432"
+  : "0x8004A818BFB912233c491871b3d84c89A494BD9e") as `0x${string}`;
 const balanceOfAbi = [
   {
     type: "function",
@@ -43,7 +45,7 @@ const transferEvent = parseAbiItem(
 const latest = await client.getBlockNumber();
 const fromBlock = latest > 200_000n ? latest - 200_000n : 0n;
 const logs = await client.getLogs({
-  address: USDT_CELO,
+  address: PAY_TOKEN,
   event: transferEvent,
   args: { from: wallet },
   fromBlock,

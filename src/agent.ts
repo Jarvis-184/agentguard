@@ -8,7 +8,7 @@ import { createClient } from "@altananetwork/sdk";
 import { readFileSync, appendFileSync, existsSync } from "node:fs";
 import {
   CHAINS,
-  USDT_CELO,
+  PAY_TOKEN,
   DAILY_CAP_USDT,
   SESSION_DAYS,
   ALLOWED_CALLS,
@@ -34,7 +34,7 @@ const spentToday = existsSync("jobs.jsonl")
       .reduce((sum, l) => sum + BigInt(JSON.parse(l).paidUnits ?? 0), 0n)
   : 0n;
 
-const decision = checkJob(policy, USDT_CELO, 0n, spentToday);
+const decision = checkJob(policy, PAY_TOKEN, 0n, spentToday);
 appendFileSync("jobs.jsonl", JSON.stringify({ wallet, decision, jobUrl }) + "\n");
 if (!decision.ok) {
   console.error("guard refused:", decision.reason);
