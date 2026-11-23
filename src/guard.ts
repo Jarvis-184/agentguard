@@ -26,6 +26,9 @@ export function checkJob(
   nowUnix = Math.floor(Date.now() / 1000),
 ): GuardDecision {
   const checkedAt = new Date().toISOString();
+  if (amountUnits <= 0n) {
+    return { ok: false, reason: "amount must be positive", checkedAt };
+  }
   if (nowUnix >= policy.expiryUnix) {
     return { ok: false, reason: "session expired", checkedAt };
   }

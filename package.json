@@ -7,7 +7,8 @@
     "provision": "tsx src/provision.ts",
     "agent": "tsx src/agent.ts",
     "snapshot": "tsx src/snapshot.ts",
-    "simulate": "tsx src/simulate.ts"
+    "simulate": "tsx src/simulate.ts",
+    "test": "tsx test/guard.test.ts"
   },
   "dependencies": {
     "@altananetwork/sdk": "^1.1.0",
