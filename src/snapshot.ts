@@ -54,7 +54,7 @@ const logs = await client.getLogs({
 const payments = [];
 for (const log of logs.slice(-50)) {
   const tx = await client.getTransaction({ hash: log.transactionHash });
-  const tagged = (tx.input as string).toLowerCase().endsWith(ATTRIBUTION_SUFFIX.toLowerCase());
+  const tagged = (tx.input as string).toLowerCase().endsWith(ATTRIBUTION_SUFFIX.toLowerCase().replace(/^0x/, ""));
   payments.push({
     hash: log.transactionHash,
     to: log.args.to,

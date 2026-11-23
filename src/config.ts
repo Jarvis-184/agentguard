@@ -26,3 +26,14 @@ export const AGENT_IDENTITY = {
     "Market-brief agent that pays per request over x402 under an owner-set spend cap, allowlist and expiry.",
   endpoint: "https://github.com/Jarvis-184/agentguard",
 };
+
+// x402 demo merchant + hosted facilitator (Celo). The buy gateway's embedded
+// verifier only accepts plain EOA signatures, so a smart-account payer goes
+// through the hosted facilitator for verification and settles on-chain via
+// the token's transferWithAuthorization (Circle's ERC-1271-aware USDC).
+export const MERCHANT_ADDRESS = "0x8Ced59c00F99d6892f181979EE1de3F07BCEDb0f" as const;
+export const FACILITATOR_URL =
+  NETWORK === "celo" ? "https://api.x402.celo.org" : "https://api.x402.sepolia.celo.org";
+export const JOB_PRICE_UNITS = 5_000n; // 0.005 in 6-decimal base units
+export const EXPLORER_TX =
+  NETWORK === "celo" ? "https://celoscan.io/tx/" : "https://celo-sepolia.blockscout.com/tx/";
