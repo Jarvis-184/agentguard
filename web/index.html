@@ -57,16 +57,17 @@ if (!data) {
 } else {
   policyEl.innerHTML = `
     <div class="row"><span>Agent</span><strong>${esc(data.agent.name)}</strong></div>
-    <div class="row"><span>Wallet</span><span class="mono"><a href="https://celoscan.io/address/${data.wallet}" target="_blank" rel="noopener">${short(data.wallet)}</a></span></div>
+    <div class="row"><span>Wallet</span><span class="mono"><a href="${data.explorerAddress ?? "https://celoscan.io/address/"}${data.wallet}" target="_blank" rel="noopener">${short(data.wallet)}</a></span></div>
     <div class="row"><span>ERC-8004 identity</span><span class="pill ${data.erc8004Agents > 0 ? "ok" : "no"}">${data.erc8004Agents > 0 ? "registered" : "not yet"}</span></div>
+    ${data.agent8004 ? `<div class="row"><span>Agent</span><span class="mono"><a href="${esc(data.agent8004.scanUrl)}">#${esc(data.agent8004.id)}</a></span></div>` : ""}
     <div class="row"><span>Snapshot</span><span class="mono">${esc(data.generatedAt)}</span></div>`;
 
   const payEl = document.getElementById("payments");
   payEl.innerHTML = data.payments.length
     ? data.payments.slice().reverse().map((p) => `
       <div class="row">
-        <span class="mono"><a href="https://celoscan.io/tx/${p.hash}" target="_blank" rel="noopener">${short(p.hash)}</a></span>
-        <span>${esc(p.amountUsdt)} ${esc(data.paySymbol)}</span>
+        <span class="mono"><a href="${data.explorerTx ?? "https://celoscan.io/tx/"}${p.hash}" target="_blank" rel="noopener">${short(p.hash)}</a></span>
+        <span>${esc(p.amountUsdt)} ${esc(data.paySymbol)} · ${esc(p.kind ?? "payment")}</span>
         <span class="pill ${p.tagged ? "ok" : "no"}">${p.tagged ? "tagged" : "untagged"}</span>
       </div>`).join("")
     : `<div class="empty">No payments yet.</div>`;
