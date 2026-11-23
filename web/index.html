@@ -77,7 +77,7 @@ if (!data) {
     ? data.jobs.slice().reverse().map((j) => `
       <div class="row">
         <span class="mono">${esc(j.decision?.checkedAt ?? j.paidAt ?? "")}</span>
-        <span>${esc(j.decision?.reason ?? ("paid, status " + j.status))}</span>
+        <span>${esc(j.decision?.reason ?? (j.tx ? "paid, status " + j.status : "payment attempt failed, HTTP " + j.status))}</span>
         ${j.decision ? `<span class="pill ${j.decision.ok ? "ok" : "no"}">${j.decision.ok ? "allow" : "deny"}</span>` : ""}
       </div>`).join("")
     : `<div class="empty">No jobs logged yet.</div>`;

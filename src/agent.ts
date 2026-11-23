@@ -96,7 +96,8 @@ if (!verdict.isValid) {
 // 4. Settle on-chain: anyone may submit transferWithAuthorization; the
 // operator's key pays the gas. On mainnet this goes through the facilitator's
 // /settle with an API key instead.
-const adminKey = readFileSync("/home/sandbox/.agentguard-admin-key", "utf8").trim() as `0x${string}`;
+const adminKey = (process.env.ADMIN_PRIVATE_KEY ??
+  readFileSync(".agent_admin_key", "utf8").trim()) as `0x${string}`; // owner key: pays settle gas only
 const admin = privateKeyToAccount(adminKey);
 const chain = NETWORK === "celo" ? celo : celoSepolia;
 const rpc = NETWORK === "celo" ? "https://forno.celo.org" : "https://forno.celo-sepolia.celo-testnet.org";

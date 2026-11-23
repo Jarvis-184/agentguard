@@ -250,5 +250,5 @@ window.AGENTGUARD_SNAPSHOT = {
       "block": "42154655"
     }
   ],
-  "generatedAt": "2026-11-23T12:57:41.308Z"
+  "generatedAt": "2026-11-23T13:02:15.974Z"
 };
