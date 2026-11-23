@@ -66,7 +66,7 @@ if (!data) {
     ? data.payments.slice().reverse().map((p) => `
       <div class="row">
         <span class="mono"><a href="https://celoscan.io/tx/${p.hash}" target="_blank" rel="noopener">${short(p.hash)}</a></span>
-        <span>${esc(p.amountUsdt)} USD₮</span>
+        <span>${esc(p.amountUsdt)} ${esc(data.paySymbol)}</span>
         <span class="pill ${p.tagged ? "ok" : "no"}">${p.tagged ? "tagged" : "untagged"}</span>
       </div>`).join("")
     : `<div class="empty">No payments yet.</div>`;

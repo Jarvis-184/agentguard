@@ -7,7 +7,7 @@
 import { createPublicClient, http, parseAbiItem, formatUnits } from "viem";
 import { celo, celoSepolia } from "viem/chains";
 import { writeFileSync, readFileSync, existsSync } from "node:fs";
-import { NETWORK, PAY_TOKEN, AGENT_IDENTITY } from "./config.js";
+import { NETWORK, PAY_TOKEN, PAY_SYMBOL, AGENT_IDENTITY } from "./config.js";
 import { ATTRIBUTION_SUFFIX } from "./tags.js";
 
 const wallet = process.env.AGENT_WALLET as `0x${string}`;
@@ -38,12 +38,12 @@ const agentCount = await client.readContract({
   args: [wallet],
 });
 
-// USD₮ transfers to/from the wallet, most recent 50.
+// Payment-token transfers to/from the wallet, most recent 50.
 const transferEvent = parseAbiItem(
   "event Transfer(address indexed from, address indexed to, uint256 value)",
 );
 const latest = await client.getBlockNumber();
-const fromBlock = latest > 9_500n ? latest - 9_500n : 0n;
+const fromBlock = latest > 200_000n ? latest - 99_500n : 0n;
 const logs = await client.getLogs({
   address: PAY_TOKEN,
   event: transferEvent,
@@ -71,6 +71,7 @@ const jobs = existsSync("jobs.jsonl")
 const payload = JSON.stringify(
     {
       wallet,
+      paySymbol: PAY_SYMBOL,
       agent: AGENT_IDENTITY,
       erc8004Agents: Number(agentCount),
       payments,

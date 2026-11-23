@@ -8,3 +8,4 @@ _helper_key
 .helper_key
 .helper2_key
 .agent_session_key
+src/_*.ts

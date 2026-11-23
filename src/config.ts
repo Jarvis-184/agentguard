@@ -8,6 +8,7 @@ export const CHAINS = NETWORK === "celo" ? [CELO] : [CELO_SEPOLIA];
 export const USDT_CELO = "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e" as const;
 export const USDC_SEPOLIA = "0x01C5C0122039549AD1493B8220cABEdD739BC44E" as const;
 export const PAY_TOKEN = NETWORK === "celo" ? USDT_CELO : USDC_SEPOLIA;
+export const PAY_SYMBOL = NETWORK === "celo" ? "USD\u20ae" : "USDC";
 
 // Paid job endpoint: buy gateway. Sandbox = same prices, test funds.
 export const JOB_API_URL =
