@@ -92,7 +92,7 @@ export function createApp(env: Env, facilitatorOverride?: any) {
       return c.json({ date: b.date, celoUsd: b.celoUsd, change24hPct: b.change24hPct, changeWindow: b.changeWindow, note: 'Free preview. Full brief at /market-brief.' })
     } catch (e: any) {
       console.error('preview failed:', e?.message)
-      return c.json({ error: 'data_unavailable', detail: String(e?.message ?? e).slice(0, 200) }, 503)
+      return c.json({ error: 'data_unavailable', }, 503)
     }
   })
   app.use('/market-brief', mirrorPaymentRequiredBody)

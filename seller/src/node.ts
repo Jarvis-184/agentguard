@@ -9,11 +9,12 @@ const port = Number(process.env.PORT ?? 8787)
 serve({
   port,
   fetch: (req) => {
-    const proto = req.headers.get('x-forwarded-proto')?.split(',')[0]?.trim()
-    const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host')
-    if (!proto || !host) return app.fetch(req)
+    // Fixed public origin (Render sets RENDER_EXTERNAL_URL). Client-supplied
+    // forwarded host headers are never trusted.
+    const origin = process.env.PUBLIC_BASE_URL ?? process.env.RENDER_EXTERNAL_URL
+    if (!origin) return app.fetch(req)
     const u = new URL(req.url)
-    return app.fetch(new Request(`${proto}://${host}${u.pathname}${u.search}`, req))
+    return app.fetch(new Request(`${origin.replace(/\/$/, '')}${u.pathname}${u.search}`, req))
   },
 })
 console.log(`seller on :${port}`)

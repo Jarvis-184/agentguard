@@ -58,7 +58,7 @@ assert.equal(r.status, 503); assert.ok(!calls.includes('settle'), 'must not sett
 _resetBriefCache()
 globalThis.fetch = (async (u: any, i: any) => (String(u).includes('kraken') ? new Response('x', { status: 429 }) : realFetch(u, i))) as any
 const fb = await getBrief(2e12); globalThis.fetch = realFetch
-assert.ok(fb.celoUsd > 0 && fb.changeWindow === '24h' && fb.usdcUsd !== undefined); ok('price falls back to CoinGecko when Kraken fails')
+assert.ok(fb.celoUsd > 0 && fb.changeWindow === '24h'); ok('price falls back to CoinGecko when Kraken fails')
 // 6c HEAD and other methods do not bypass the paywall
 r = await f('/market-brief', { method: 'HEAD' }); assert.equal(r.status, 405); r = await f('/market-brief', { method: 'POST' }); assert.equal(r.status, 405); r = await f('/market-brief', { method: 'OPTIONS' }); assert.equal(r.status, 204); ok('HEAD/POST on paid route are 405, not free; OPTIONS preflight ok')
 // 6d security headers on the page
@@ -80,4 +80,14 @@ r = await pay3(base + '/market-brief'); const bt = await r.text()
 assert.ok(r.status >= 400 && !bt.includes('celoUsd')); ok('facilitator failure returns an error and no content (status ' + r.status + ')')
 // 7 unknown route
 r = await f('/nope'); assert.equal(r.status, 404); ok('404 for unknown route')
+// 8 concurrent brief requests share one upstream fetch
+_resetBriefCache(); let upCalls = 0
+globalThis.fetch = (async (u: any, i: any) => { if (/kraken/.test(String(u))) upCalls++; return realFetch(u, i) }) as any
+await Promise.all([1,2,3,4,5].map(() => getBrief(3e12))); globalThis.fetch = realFetch
+assert.equal(upCalls, 1); ok('5 concurrent brief requests make 1 upstream price call')
+// 9 brief has no null fields, preview 503 leaks no internals
+const bb: any = await getBrief(3e12); assert.ok(!Object.values(bb).includes(null)); ok('brief has no null fields')
+_resetBriefCache(); globalThis.fetch = (async (u: any, i: any) => (/forno|coingecko|kraken|ankr/.test(String(u)) ? new Response('x', { status: 500 }) : realFetch(u, i))) as any
+r = await f('/preview'); const pj: any = await r.json(); globalThis.fetch = realFetch
+assert.equal(r.status, 503); assert.deepEqual(Object.keys(pj), ['error']); ok('preview 503 leaks no internal detail')
 console.log(`ALL ${n} PASSED`)
