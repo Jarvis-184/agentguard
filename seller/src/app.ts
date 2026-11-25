@@ -11,6 +11,7 @@ export interface Env {
   X402_API_KEY?: string
   SELLER_PAY_TO?: string
   X402_NETWORK?: string // "mainnet" or unset (Celo Sepolia)
+  RATE_LIMIT_PER_MIN?: string
   PRICE_MICRO?: string // price in USDC micro units, default 1000 = $0.001
 }
 
@@ -53,8 +54,32 @@ export function createApp(env: Env, facilitatorOverride?: any) {
   }
 
   const app = new Hono()
+  // Small in-memory rate limit per client IP (free host, single instance). Keeps scrapers
+  // and spammed invalid payment headers from burning facilitator calls.
+  const hits = new Map<string, { n: number; reset: number }>()
+  app.use('*', async (c, next) => {
+    const ip = (c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0] ?? 'local').trim()
+    const now = Date.now()
+    if (hits.size > 5000) for (const [k, v] of hits) if (v.reset < now) hits.delete(k)
+    const e = hits.get(ip)
+    if (!e || e.reset < now) hits.set(ip, { n: 1, reset: now + 60_000 })
+    else if (++e.n > (env.RATE_LIMIT_PER_MIN ? Number(env.RATE_LIMIT_PER_MIN) : 60)) {
+      return c.json({ error: 'rate_limited', retryAfterSeconds: Math.ceil((e.reset - now) / 1000) }, 429)
+    }
+    await next()
+  })
+  // The paid route answers GET only. HEAD would otherwise skip the paywall.
+  app.use('/market-brief', async (c, next) => {
+    if (c.req.method !== 'GET' && c.req.method !== 'OPTIONS') return c.json({ error: 'method_not_allowed', allowed: 'GET' }, 405, { Allow: 'GET' })
+    await next()
+  })
   app.use('*', async (c, next) => {
     await next()
+    if (c.req.path === '/') {
+      c.res.headers.set('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'")
+    }
+    c.res.headers.set('X-Content-Type-Options', 'nosniff')
+    c.res.headers.set('Referrer-Policy', 'no-referrer')
     c.res.headers.set('Access-Control-Allow-Origin', '*')
     c.res.headers.set('Access-Control-Expose-Headers', 'PAYMENT-REQUIRED, PAYMENT-RESPONSE')
   })

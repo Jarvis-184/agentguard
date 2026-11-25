@@ -59,6 +59,25 @@ _resetBriefCache()
 globalThis.fetch = (async (u: any, i: any) => (String(u).includes('kraken') ? new Response('x', { status: 429 }) : realFetch(u, i))) as any
 const fb = await getBrief(2e12); globalThis.fetch = realFetch
 assert.ok(fb.celoUsd > 0 && fb.changeWindow === '24h' && fb.usdcUsd !== undefined); ok('price falls back to CoinGecko when Kraken fails')
+// 6c HEAD and other methods do not bypass the paywall
+r = await f('/market-brief', { method: 'HEAD' }); assert.equal(r.status, 405); r = await f('/market-brief', { method: 'POST' }); assert.equal(r.status, 405); r = await f('/market-brief', { method: 'OPTIONS' }); assert.equal(r.status, 204); ok('HEAD/POST on paid route are 405, not free; OPTIONS preflight ok')
+// 6d security headers on the page
+r = await f('/'); assert.ok(r.headers.get('content-security-policy')?.includes("default-src 'none'")); assert.equal(r.headers.get('x-content-type-options'), 'nosniff'); ok('page has CSP and nosniff')
+// 6e rate limit
+const rl = createApp({ SELLER_PAY_TO: PAYTO, RATE_LIMIT_PER_MIN: '5' }, mock)
+let last = 0; for (let i = 0; i < 7; i++) last = (await rl.request(base + '/health', { headers: { 'cf-connecting-ip': '9.9.9.9' } })).status
+assert.equal(last, 429); assert.equal((await rl.request(base + '/health', { headers: { 'cf-connecting-ip': '8.8.8.8' } })).status, 200); ok('rate limit is per IP (429 after limit, other IP fine)')
+// 6f mainnet dry run: 402 shape only, no key, no network call to settle
+const mn = createApp({ SELLER_PAY_TO: PAYTO, X402_NETWORK: 'mainnet' }, { ...mock, async getSupported() { return { kinds: [{ x402Version: 2, scheme: 'exact', network: 'eip155:42220' }], extensions: [], signers: {} } } })
+const mr = await mn.request(base + '/market-brief'); assert.equal(mr.status, 402)
+const m: any = (await mr.json()).accepts[0]
+assert.equal(m.network, 'eip155:42220'); assert.equal(m.asset, '0xcebA9300f2b948710d2653dD7B07f33A8B32118C'); assert.equal(m.amount, '1000'); assert.equal(m.payTo, PAYTO); assert.deepEqual(m.extra, { name: 'USDC', version: '2' }); ok('mainnet dry run: 402 shape correct (eip155:42220, mainnet USDC, 1000, payTo)')
+// 6g facilitator failure: no content, no crash
+const bad: any = { ...mock, async verify() { throw new Error('facilitator down') } }
+const ba = createApp({ SELLER_PAY_TO: PAYTO }, bad)
+const pay3 = wrapFetchWithPayment(((u: any, i: any) => ba.request(u, i)) as any, client)
+r = await pay3(base + '/market-brief'); const bt = await r.text()
+assert.ok(r.status >= 400 && !bt.includes('celoUsd')); ok('facilitator failure returns an error and no content (status ' + r.status + ')')
 // 7 unknown route
 r = await f('/nope'); assert.equal(r.status, 404); ok('404 for unknown route')
 console.log(`ALL ${n} PASSED`)
