@@ -17,6 +17,10 @@ X402_NETWORK=mainnet ...                              # Celo mainnet
 npm test                                              # offline tests with a mock facilitator
 ```
 
-Env: `SELLER_PAY_TO` (receiver), `X402_API_KEY`, `X402_NETWORK` (`mainnet` or unset), `PRICE_MICRO` (default 1000 = $0.001).
+Env: `SELLER_PAY_TO` (receiver), `X402_API_KEY`, `X402_NETWORK` (`mainnet` or unset), `PRICE_MICRO` (default 1000 = $0.001), `PUBLIC_BASE_URL` (public origin; on Render `RENDER_EXTERNAL_URL` is used, forwarded host headers are never trusted), `RATE_LIMIT_PER_MIN` (default 60 per IP).
+
+Data: Kraken hourly candles for the CELO price and a true 24h change (CoinGecko as fallback), forno.celo.org for the latest block and base fee (ankr as fallback). Responses are cached for 5 minutes.
+
+Facilitator cost: the Celo x402 facilitator charges gas plus 0.3% per settlement from the seller's account. New accounts get free credits (one settlement each) and then need a USDC deposit. At $0.001 per request the price is below that per-settlement cost, so after the free credits a deposit is needed or settlements fail (the buyer is not charged when a settlement fails).
 
 Built on `@x402/hono`, `@x402/evm` and the example at celo-org/x402-celo-example.

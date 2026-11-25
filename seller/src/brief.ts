@@ -35,8 +35,8 @@ async function getJson(url: string): Promise<any> {
   return r.json()
 }
 
-/** CELO/USD and change. CoinGecko gives a true 24h change; Kraken is the fallback (change since 00:00 UTC open). */
-async function getPrice(now = Date.now()): Promise<{ usd: number; change: number; window: string }> {
+/** CELO/USD and a true 24h change. Kraken hourly candles first; CoinGecko is the fallback (it blocks some host IPs). */
+async function getPrice(now = Date.now()): Promise<{ usd: number; change: number; window: string; source: string }> {
   const errs: string[] = []
   // Kraken hourly candles: last close vs the close 24h earlier (true 24h change).
   try {
@@ -46,14 +46,15 @@ async function getPrice(now = Date.now()): Promise<{ usd: number; change: number
     const cutoff = Math.floor(now / 1000) - 24 * 3600
     const ref = [...rows].reverse().find((r) => r[0] <= cutoff)
     const usd = Number(last?.[4]), prev = Number(ref?.[4])
-    if (Number.isFinite(usd) && usd > 0 && Number.isFinite(prev) && prev > 0) return { usd, change: ((usd - prev) / prev) * 100, window: '24h', }
-    errs.push('kraken empty')
+    const fresh = last && ref && Math.floor(now / 1000) - last[0] < 3 * 3600 && cutoff - ref[0] < 3 * 3600
+    if (fresh && Number.isFinite(usd) && usd > 0 && Number.isFinite(prev) && prev > 0) return { usd, change: ((usd - prev) / prev) * 100, window: '24h', source: 'kraken' }
+    errs.push('kraken empty or stale')
   } catch (e: any) { errs.push(String(e?.message ?? e)) }
   try {
     const j = await getJson(CG)
     const usd = Number(j?.celo?.usd)
     if (Number.isFinite(usd)) {
-      return { usd, change: Number(j.celo.usd_24h_change ?? 0), window: '24h' }
+      return { usd, change: Number(j.celo.usd_24h_change ?? 0), window: '24h', source: 'coingecko' }
     }
     errs.push('coingecko empty')
   } catch (e: any) { errs.push(String(e?.message ?? e)) }
@@ -97,7 +98,7 @@ async function build(now: number): Promise<Brief> {
     blockTime: new Date(Number(BigInt(blk.timestamp)) * 1000).toISOString(),
     baseFeeGwei: r2(baseFeeGwei),
     summary: `CELO is ${dir} ${Math.abs(price.change).toFixed(2)}% (${price.window}) at $${price.usd.toFixed(4)}. Celo block ${block}, base fee ${baseFeeGwei.toFixed(1)} gwei.`,
-    sources: ['forno.celo.org (JSON-RPC)', 'price: kraken/coingecko'],
+    sources: ['forno.celo.org (JSON-RPC)', `price: ${price.source}`],
   }
   cache = { at: now, value: brief }
   return brief

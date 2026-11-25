@@ -90,4 +90,12 @@ const bb: any = await getBrief(3e12); assert.ok(!Object.values(bb).includes(null
 _resetBriefCache(); globalThis.fetch = (async (u: any, i: any) => (/forno|coingecko|kraken|ankr/.test(String(u)) ? new Response('x', { status: 500 }) : realFetch(u, i))) as any
 r = await f('/preview'); const pj: any = await r.json(); globalThis.fetch = realFetch
 assert.equal(r.status, 503); assert.deepEqual(Object.keys(pj), ['error']); ok('preview 503 leaks no internal detail')
+// 10 stale Kraken candles are rejected, falls back to CoinGecko
+globalThis.fetch = (async (u: any, i: any) => {
+  if (/kraken/.test(String(u))) return new Response(JSON.stringify({ result: { CELOUSD: [[1000, '1', '1', '1', '1'], [2000, '2', '2', '2', '2']] } }), { status: 200 })
+  if (/coingecko/.test(String(u))) return new Response(JSON.stringify({ celo: { usd: 0.05, usd_24h_change: 1.5 } }), { status: 200 })
+  return realFetch(u, i)
+}) as any
+_resetBriefCache(); const sb: any = await getBrief(3e12); globalThis.fetch = realFetch
+assert.equal(sb.celoUsd, 0.05); assert.equal(sb.sources[1], 'price: coingecko'); ok('stale Kraken data is rejected, CoinGecko used and labeled')
 console.log(`ALL ${n} PASSED`)
