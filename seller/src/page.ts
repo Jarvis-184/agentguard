@@ -22,7 +22,7 @@ h1{font-size:34px;line-height:1.15;margin:14px 0 8px;letter-spacing:-.02em}
 .stat b{display:block;font-size:24px}
 .stat span{color:var(--mute);font-size:13px}
 dl{margin:0;display:grid;grid-template-columns:120px 1fr;gap:8px 12px;font-size:15px}
-dt{color:var(--mute)}dd{margin:0;word-break:break-all}
+dt{color:var(--mute)}dd{margin:0}dd code{word-break:break-all}
 code,pre{font:13.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--code);border-radius:8px}
 code{padding:1px 6px}
 pre{padding:14px 16px;overflow:auto;margin:0}
@@ -69,9 +69,9 @@ fetch('/preview').then(function(r){if(!r.ok)throw 0;return r.json()}).then(funct
   var up=d.change24hPct>=0;
   document.getElementById('pv').innerHTML=
    '<div class="stat"><b>$'+d.celoUsd.toFixed(4)+'</b><span>CELO price</span></div>'+
-   '<div class="stat"><b style="color:'+(up?'#1f7a4d':'#b42318')+'">'+(up?'+':'')+d.change24hPct.toFixed(2)+'%</b><span>24h change</span></div>'+
+   '<div class="stat"><b style="color:'+(up?'#1f7a4d':'#b42318')+'">'+(up?'+':'')+d.change24hPct.toFixed(2)+'%</b><span>'+(d.changeWindow||'24h')+' change</span></div>'+
    '<div class="stat"><b>'+d.date+'</b><span>date (UTC)</span></div>';
-}).catch(function(){document.getElementById('pv').innerHTML='<span class="err">Preview unavailable right now.</span>'});
+}).catch(function(){document.getElementById('pv').innerHTML='<div class="err" style="grid-column:1/-1">Preview unavailable right now. The paid route has the same data.</div>'});
 </script>
 </body></html>`
 }

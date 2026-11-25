@@ -48,12 +48,17 @@ _resetBriefCache(); const t1 = await getBrief(1e12); const t2 = await getBrief(1
 // 6 upstream failure => 503 and no settle
 const realFetch = globalThis.fetch
 _resetBriefCache()
-globalThis.fetch = (async (u: any, i: any) => (String(u).includes('forno') || String(u).includes('coingecko') ? new Response('x', { status: 500 }) : realFetch(u, i))) as any
+globalThis.fetch = (async (u: any, i: any) => (/forno|coingecko|kraken|ankr/.test(String(u)) ? new Response('x', { status: 500 }) : realFetch(u, i))) as any
 calls.length = 0
 const pay2 = wrapFetchWithPayment(((u: any, i: any) => app.request(u, i)) as any, client)
 r = await pay2(base + '/market-brief')
 globalThis.fetch = realFetch
 assert.equal(r.status, 503); assert.ok(!calls.includes('settle'), 'must not settle on failure'); ok('data failure returns 503 and does not settle (no charge)')
+// 6b fallback: CoinGecko down, Kraken answers
+_resetBriefCache()
+globalThis.fetch = (async (u: any, i: any) => (String(u).includes('coingecko') ? new Response('x', { status: 429 }) : realFetch(u, i))) as any
+const fb = await getBrief(2e12); globalThis.fetch = realFetch
+assert.ok(fb.celoUsd > 0 && fb.changeWindow === 'since 00:00 UTC'); ok('price falls back to Kraken when CoinGecko fails')
 // 7 unknown route
 r = await f('/nope'); assert.equal(r.status, 404); ok('404 for unknown route')
 console.log(`ALL ${n} PASSED`)

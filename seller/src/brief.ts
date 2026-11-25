@@ -7,6 +7,7 @@ export interface Brief {
   blockTime: string
   baseFeeGwei: number
   usdcUsd: number | null
+  changeWindow: string
   summary: string
   sources: string[]
 }
@@ -29,33 +30,66 @@ async function rpc(method: string, params: unknown[]): Promise<any> {
   return j.result
 }
 
+async function getJson(url: string): Promise<any> {
+  const r = await fetch(url, { signal: AbortSignal.timeout(8000), headers: { accept: 'application/json', 'user-agent': 'agentguard-brief/0.1' } })
+  if (!r.ok) throw new Error(`${new URL(url).host} ${r.status}`)
+  return r.json()
+}
+
+/** CELO/USD and change. CoinGecko gives a true 24h change; Kraken is the fallback (change since 00:00 UTC open). */
+async function getPrice(): Promise<{ usd: number; change: number; window: string; usdc: number | null }> {
+  const errs: string[] = []
+  try {
+    const j = await getJson(CG)
+    const usd = Number(j?.celo?.usd)
+    if (Number.isFinite(usd)) {
+      const u = Number(j?.['usd-coin']?.usd)
+      return { usd, change: Number(j.celo.usd_24h_change ?? 0), window: '24h', usdc: Number.isFinite(u) ? u : null }
+    }
+    errs.push('coingecko empty')
+  } catch (e: any) { errs.push(String(e?.message ?? e)) }
+  try {
+    const j = await getJson('https://api.kraken.com/0/public/Ticker?pair=CELOUSD')
+    const t: any = Object.values(j?.result ?? {})[0]
+    const last = Number(t?.c?.[0]), open = Number(t?.o)
+    if (Number.isFinite(last) && Number.isFinite(open) && open > 0) return { usd: last, change: ((last - open) / open) * 100, window: 'since 00:00 UTC', usdc: null }
+    errs.push('kraken empty')
+  } catch (e: any) { errs.push(String(e?.message ?? e)) }
+  throw new Error('price sources failed: ' + errs.join('; '))
+}
+
+async function getBlock(): Promise<any> {
+  const errs: string[] = []
+  for (const url of [RPC, 'https://rpc.ankr.com/celo']) {
+    try {
+      const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getBlockByNumber', params: ['latest', false] }), signal: AbortSignal.timeout(8000) })
+      if (!r.ok) throw new Error(`${new URL(url).host} ${r.status}`)
+      const j: any = await r.json()
+      if (j.result?.baseFeePerGas) return j.result
+      throw new Error(`${new URL(url).host} bad result`)
+    } catch (e: any) { errs.push(String(e?.message ?? e)) }
+  }
+  throw new Error('rpc failed: ' + errs.join('; '))
+}
+
 export async function getBrief(now = Date.now()): Promise<Brief> {
   if (cache && now - cache.at < TTL_MS) return cache.value
-  const [blk, price] = await Promise.all([
-    rpc('eth_getBlockByNumber', ['latest', false]),
-    fetch(CG, { signal: AbortSignal.timeout(8000), headers: { accept: 'application/json' } }).then((r) => {
-      if (!r.ok) throw new Error(`price ${r.status}`)
-      return r.json() as Promise<any>
-    }),
-  ])
-  const celoUsd = Number(price?.celo?.usd)
-  if (!Number.isFinite(celoUsd)) throw new Error('price missing')
-  const change = Number(price.celo.usd_24h_change ?? 0)
+  const [blk, price] = await Promise.all([getBlock(), getPrice()])
   const baseFeeGwei = Number(BigInt(blk.baseFeePerGas)) / 1e9
   const block = Number(BigInt(blk.number))
-  const blockTime = new Date(Number(BigInt(blk.timestamp)) * 1000).toISOString()
-  const usdc = Number(price?.['usd-coin']?.usd)
-  const dir = change >= 0 ? 'up' : 'down'
+  const dir = price.change >= 0 ? 'up' : 'down'
+  const r2 = (n: number) => Math.round(n * 100) / 100
   const brief: Brief = {
     date: new Date(now).toISOString().slice(0, 10),
-    celoUsd: Math.round(celoUsd * 10000) / 10000,
-    change24hPct: Math.round(change * 100) / 100,
+    celoUsd: Math.round(price.usd * 10000) / 10000,
+    change24hPct: r2(price.change),
+    changeWindow: price.window,
     block,
-    blockTime,
-    baseFeeGwei: Math.round(baseFeeGwei * 100) / 100,
-    usdcUsd: Number.isFinite(usdc) ? Math.round(usdc * 10000) / 10000 : null,
-    summary: `CELO is ${dir} ${Math.abs(change).toFixed(2)}% in 24h at $${celoUsd.toFixed(4)}. Celo block ${block}, base fee ${baseFeeGwei.toFixed(1)} gwei.`,
-    sources: ['forno.celo.org (JSON-RPC)', 'api.coingecko.com (simple price)'],
+    blockTime: new Date(Number(BigInt(blk.timestamp)) * 1000).toISOString(),
+    baseFeeGwei: r2(baseFeeGwei),
+    usdcUsd: price.usdc === null ? null : Math.round(price.usdc * 10000) / 10000,
+    summary: `CELO is ${dir} ${Math.abs(price.change).toFixed(2)}% (${price.window}) at $${price.usd.toFixed(4)}. Celo block ${block}, base fee ${baseFeeGwei.toFixed(1)} gwei.`,
+    sources: ['forno.celo.org (JSON-RPC)', price.window === '24h' ? 'api.coingecko.com' : 'api.kraken.com'],
   }
   cache = { at: now, value: brief }
   return brief
