@@ -37,8 +37,19 @@ async function getJson(url: string): Promise<any> {
 }
 
 /** CELO/USD and change. CoinGecko gives a true 24h change; Kraken is the fallback (change since 00:00 UTC open). */
-async function getPrice(): Promise<{ usd: number; change: number; window: string; usdc: number | null }> {
+async function getPrice(now = Date.now()): Promise<{ usd: number; change: number; window: string; usdc: number | null }> {
   const errs: string[] = []
+  // Kraken hourly candles: last close vs the close 24h earlier (true 24h change).
+  try {
+    const j = await getJson('https://api.kraken.com/0/public/OHLC?pair=CELOUSD&interval=60')
+    const rows: any[] = j?.result?.CELOUSD ?? []
+    const last = rows[rows.length - 1]
+    const cutoff = Math.floor(now / 1000) - 24 * 3600
+    const ref = [...rows].reverse().find((r) => r[0] <= cutoff)
+    const usd = Number(last?.[4]), prev = Number(ref?.[4])
+    if (Number.isFinite(usd) && usd > 0 && Number.isFinite(prev) && prev > 0) return { usd, change: ((usd - prev) / prev) * 100, window: '24h', usdc: null }
+    errs.push('kraken empty')
+  } catch (e: any) { errs.push(String(e?.message ?? e)) }
   try {
     const j = await getJson(CG)
     const usd = Number(j?.celo?.usd)
@@ -47,13 +58,6 @@ async function getPrice(): Promise<{ usd: number; change: number; window: string
       return { usd, change: Number(j.celo.usd_24h_change ?? 0), window: '24h', usdc: Number.isFinite(u) ? u : null }
     }
     errs.push('coingecko empty')
-  } catch (e: any) { errs.push(String(e?.message ?? e)) }
-  try {
-    const j = await getJson('https://api.kraken.com/0/public/Ticker?pair=CELOUSD')
-    const t: any = Object.values(j?.result ?? {})[0]
-    const last = Number(t?.c?.[0]), open = Number(t?.o)
-    if (Number.isFinite(last) && Number.isFinite(open) && open > 0) return { usd: last, change: ((last - open) / open) * 100, window: 'since 00:00 UTC', usdc: null }
-    errs.push('kraken empty')
   } catch (e: any) { errs.push(String(e?.message ?? e)) }
   throw new Error('price sources failed: ' + errs.join('; '))
 }
@@ -89,7 +93,7 @@ export async function getBrief(now = Date.now()): Promise<Brief> {
     baseFeeGwei: r2(baseFeeGwei),
     usdcUsd: price.usdc === null ? null : Math.round(price.usdc * 10000) / 10000,
     summary: `CELO is ${dir} ${Math.abs(price.change).toFixed(2)}% (${price.window}) at $${price.usd.toFixed(4)}. Celo block ${block}, base fee ${baseFeeGwei.toFixed(1)} gwei.`,
-    sources: ['forno.celo.org (JSON-RPC)', price.window === '24h' ? 'api.coingecko.com' : 'api.kraken.com'],
+    sources: ['forno.celo.org (JSON-RPC)', 'price: kraken/coingecko'],
   }
   cache = { at: now, value: brief }
   return brief

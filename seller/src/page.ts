@@ -31,7 +31,7 @@ a{color:var(--acc)}
 #pv{min-height:34px;font-size:15px}
 .err{color:#9a3412}
 footer{color:var(--mute);font-size:13px;margin-top:28px}
-@media(max-width:560px){h1{font-size:27px}.grid{grid-template-columns:1fr 1fr}dl{grid-template-columns:1fr}dt{margin-top:6px}}
+@media(max-width:560px){.stat b{font-size:20px}#pv{grid-template-columns:1fr 1fr}.stat:nth-child(3){grid-column:1/-1}pre{white-space:pre-wrap;word-break:break-all}h1{font-size:27px}.grid{grid-template-columns:1fr 1fr}dl{grid-template-columns:1fr}dt{margin-top:6px}}
 </style></head>
 <body><main>
 <span class="tag">x402 · ${esc(p.network)}</span>
