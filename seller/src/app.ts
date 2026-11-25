@@ -92,6 +92,7 @@ export function createApp(env: Env, facilitatorOverride?: any) {
       info: {
         title: 'AgentGuard Market Brief',
         version: '1.0.0',
+        contact: { name: 'AgentGuard', url: 'https://github.com/Jarvis-184/agentguard' },
         description: 'A small paid API: a Celo market brief (CELO price, 24h change, latest block, base fee), paid per request in USDC over x402.',
         'x-guidance': `Call GET /market-brief. It answers 402 Payment Required with the terms (${priceUsd} USDC on ${net.label}, pay to ${payTo}). Sign an EIP-3009 USDC authorization with any x402 v2 client and retry with the PAYMENT-SIGNATURE header. The response is JSON. GET /preview is a free sample.`,
       },
@@ -101,6 +102,7 @@ export function createApp(env: Env, facilitatorOverride?: any) {
           get: {
             operationId: 'getMarketBrief',
             summary: 'Celo market brief (CELO price, 24h change, latest block, base fee)',
+            parameters: [{ name: 'Accept', in: 'header', required: false, description: 'The response is always application/json. No input is needed.', schema: { type: 'string', enum: ['application/json'] } }],
             'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: priceUsd }, protocols: [{ x402: {} }] },
             responses: {
               '200': {
