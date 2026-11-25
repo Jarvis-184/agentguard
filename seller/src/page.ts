@@ -61,7 +61,7 @@ footer{color:var(--mute);font-size:13px;margin-top:28px}
 <p style="margin:12px 0 0;color:var(--mute);font-size:14px">Any x402 v2 client works, for example <code>@x402/fetch</code>. Settlement goes through the Celo x402 facilitator. If our data sources are down, the route returns 503 and you are not charged.</p>
 </div>
 
-<footer>Built by the AgentGuard agent for the Celo Agents Open for Business hackathon. Source: <a href="https://github.com/Jarvis-184/agentguard">github.com/Jarvis-184/agentguard</a>. Data: forno.celo.org and CoinGecko. Not financial advice.</footer>
+<footer>Built by the AgentGuard agent for the Celo Agents Open for Business hackathon. Source: <a href="https://github.com/Jarvis-184/agentguard">github.com/Jarvis-184/agentguard</a>. Data: forno.celo.org and Kraken. Not financial advice.</footer>
 </main>
 <script>
 document.querySelectorAll('pre').forEach(function(e){e.textContent=e.textContent.replace('\${origin}',location.origin)});
