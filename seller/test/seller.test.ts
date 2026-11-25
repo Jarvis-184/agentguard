@@ -98,4 +98,11 @@ globalThis.fetch = (async (u: any, i: any) => {
 }) as any
 _resetBriefCache(); const sb: any = await getBrief(3e12); globalThis.fetch = realFetch
 assert.equal(sb.celoUsd, 0.05); assert.equal(sb.sources[1], 'price: coingecko'); ok('stale Kraken data is rejected, CoinGecko used and labeled')
+// 11 openapi discovery doc matches the runtime 402
+r = await f('/openapi.json'); assert.equal(r.status, 200); const oa: any = await r.json()
+const op = oa.paths['/market-brief'].get
+assert.equal(op['x-payment-info'].price.amount, '0.001'); assert.deepEqual(op['x-payment-info'].protocols, [{ x402: {} }]); assert.ok(op.responses['402'])
+const r402: any = (await (await f('/market-brief')).json()).accepts[0]
+assert.equal(Number(r402.amount) / 1e6, Number(op['x-payment-info'].price.amount)); assert.ok(oa.info['x-guidance'].includes(r402.payTo)); ok('openapi.json matches the runtime 402 (price, payTo)')
+r = await f('/favicon.ico'); assert.equal(r.status, 200); assert.equal(r.headers.get('content-type'), 'image/svg+xml'); ok('favicon served')
 console.log(`ALL ${n} PASSED`)

@@ -6,6 +6,7 @@ export function landingPage(p: P): string {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/favicon.ico" type="image/svg+xml">
 <title>AgentGuard Market Brief · x402 on Celo</title>
 <meta name="description" content="A daily Celo market brief you pay for per request with USDC over x402. No account, no API key.">
 <style>

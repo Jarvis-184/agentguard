@@ -85,6 +85,36 @@ export function createApp(env: Env, facilitatorOverride?: any) {
   })
   app.options('*', (c) => c.body(null, 204))
   app.get('/', async (c) => c.html(landingPage({ network: net.label, caip2: net.caip2, payTo, priceUsd, asset: net.usdc })))
+  app.get('/openapi.json', (c) => {
+    const origin = new URL(c.req.url).origin
+    return c.json({
+      openapi: '3.1.0',
+      info: {
+        title: 'AgentGuard Market Brief',
+        version: '1.0.0',
+        description: 'A small paid API: a Celo market brief (CELO price, 24h change, latest block, base fee), paid per request in USDC over x402.',
+        'x-guidance': `Call GET /market-brief. It answers 402 Payment Required with the terms (${priceUsd} USDC on ${net.label}, pay to ${payTo}). Sign an EIP-3009 USDC authorization with any x402 v2 client and retry with the PAYMENT-SIGNATURE header. The response is JSON. GET /preview is a free sample.`,
+      },
+      servers: [{ url: origin }],
+      paths: {
+        '/market-brief': {
+          get: {
+            operationId: 'getMarketBrief',
+            summary: 'Celo market brief (CELO price, 24h change, latest block, base fee)',
+            'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: priceUsd }, protocols: [{ x402: {} }] },
+            responses: {
+              '200': {
+                description: 'The brief',
+                content: { 'application/json': { schema: { type: 'object', properties: { date: { type: 'string' }, celoUsd: { type: 'number' }, change24hPct: { type: 'number' }, changeWindow: { type: 'string' }, block: { type: 'integer' }, blockTime: { type: 'string' }, baseFeeGwei: { type: 'number' }, summary: { type: 'string' }, sources: { type: 'array', items: { type: 'string' } } } } } },
+              },
+              '402': { description: 'Payment Required' },
+            },
+          },
+        },
+      },
+    })
+  })
+  app.get('/favicon.ico', (c) => c.body('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1f7a4d"/><path d="M16 6l9 3v7c0 5-4 8-9 10-5-2-9-5-9-10V9z" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M12 16l3 3 5-6" fill="none" stroke="#fff" stroke-width="2.2"/></svg>', 200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' }))
   app.get('/health', (c) => c.json({ ok: true, network: net.label }))
   app.get('/preview', async (c) => {
     try {
