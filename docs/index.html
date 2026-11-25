@@ -16,7 +16,7 @@
   .row { display:flex; justify-content:space-between; gap:12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
   .row:last-child { border-bottom: 0; }
   .mono { font-family: ui-monospace, Menlo, monospace; font-size: 13px; word-break: break-all; }
-  .pill { font-size: 12px; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+  .pill { font-size: 12px; padding: 2px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; align-self: center; }
   .ok { background: rgba(53,194,110,.14); color: var(--ok); }
   .no { background: rgba(229,83,75,.14); color: var(--no); }
   a { color: var(--accent); text-decoration: none; }
@@ -32,6 +32,15 @@
     <strong>Data shown: Celo Sepolia (test network).</strong>
     <p class="sub">On Celo mainnet the Altana wallet, the USD&#8366; session key (0.50/day cap) and the ERC-8004 identity (agent 10112) are live. Mainnet payment transactions from now on carry the ERC-8021 tag <span class="mono">celo_b60bab126a06</span>; earlier setup transactions predate it. This page will show them once they exist.</p>
     <p class="sub"><a href="https://github.com/Jarvis-184/agentguard">Source on GitHub</a></p>
+  </div>
+
+  <div class="card" style="border-color:#35c26e">
+    <strong>Live on Celo mainnet: x402 seller "Market Brief"</strong>
+    <p class="sub">A pay-per-request HTTP API. One request returns CELO price, 24h change, the latest block and the base fee. Price: <strong>0.001 USDC</strong> per call, paid over the x402 protocol on Celo mainnet (eip155:42220). No account or API key.</p>
+    <div class="row"><span>Endpoint</span><span class="mono"><a href="https://agentguard-brief.onrender.com/market-brief" target="_blank" rel="noopener">/market-brief</a></span></div>
+    <div class="row"><span>Free preview</span><span class="mono"><a href="https://agentguard-brief.onrender.com/preview" target="_blank" rel="noopener">/preview</a></span></div>
+    <div class="row"><span>Pay-to wallet</span><span class="mono"><a href="https://celoscan.io/address/0x00D96E0A1b77ff3f6EA5BF5Df1b5A177f75d1319" target="_blank" rel="noopener">0x00D96E0A&#8230;5d1319</a></span></div>
+    <p class="sub">Status as of 26 Nov 2026: the seller is live and answers with a valid mainnet payment request. No paid mainnet purchase has been settled yet, so there is nothing to show in the payment list below. Any settlement can be checked on celoscan at the pay-to wallet. It runs on a free host, so the first request after idle can take about 20 seconds. This seller is separate from the Sepolia test data shown below.</p>
   </div>
 
   <h2>Policy</h2>
