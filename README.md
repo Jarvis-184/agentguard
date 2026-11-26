@@ -99,7 +99,14 @@ npm run snapshot        # AGENT_WALLET=0x... refreshes web/data.json
 - Enforced onchain, revocable in one transaction: Altana Keystore (`src/provision.ts` shows `revokeSession`)
 - Tagged onchain activity: attribution suffix on settlement txs (`src/tags.ts`)
 - ERC-8004 identity: agent #1047 registered from the wallet on Celo Sepolia
-- Named user with a real job done: owner receives a daily market brief paid for per-request
+- Named user with a real job done: no independent user yet (see Status). The agent's job is a paid market brief per request.
+
+## Status (27 Nov 2026, honest summary)
+
+- **Live on Celo mainnet:** an x402 seller, `https://agentguard-brief.onrender.com`, sells a Celo market brief for 0.001 USDC per request. PayTo: `0x00D96E0A1b77ff3f6EA5BF5Df1b5A177f75d1319`. The Altana wallet and the ERC-8004 identity (agent #10112) are live on mainnet.
+- **Our own paid calls:** a separate agent wallet made 10 paid calls (0.005 USDT each) to third-party services on `buy`. These are our own calls, not independent users.
+- **Users:** there is no independent user yet. If you run an agent with an ERC-8004 id, one 0.001 USDC call to the seller is all it takes. Feedback and issues are welcome.
+- **Testnet:** the Celo Sepolia demo above is the full end-to-end loop; the deny path is covered by unit tests, not live traffic.
 
 ## License
 
