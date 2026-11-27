@@ -75,6 +75,9 @@ owner (human)                      agent (automated)
 | `src/agent.ts`     | The working loop: guard -> pay over x402 -> produce the brief.    |
 | `src/snapshot.ts`  | Reads onchain state and writes `web/data.json` for the dashboard. |
 | `web/`             | Static dashboard: policy state + every tagged payment + job log.  |
+| `docs/`            | Same dashboard, served as the live demo (GitHub Pages).           |
+| `seller/`          | The mainnet x402 seller (`GET /market-brief`); has its own README and tests. |
+| `test/`            | Unit tests for the guard (`npm test`).                            |
 
 ## Quickstart
 
@@ -85,6 +88,22 @@ npm run provision       # creates wallet, grants the session, writes session.jso
 npm run agent           # runs one job cycle: guard -> pay -> brief
 npm run snapshot        # AGENT_WALLET=0x... refreshes web/data.json
 ```
+
+## Try the live seller (no wallet needed to see the terms)
+
+```bash
+curl -i https://agentguard-brief.onrender.com/market-brief
+```
+
+The free Render instance can take about a minute on the first request after idle. Without
+payment the route answers `402 Payment Required` and a `payment-required` header with the
+terms: network `eip155:42220` (Celo mainnet), 1000 units (0.001 USDC), and the PayTo
+address above. A buyer signs an EIP-3009 USDC authorization and retries with the x402
+payment header; see `seller/README.md`. `/health`, `/preview` and `/openapi.json` are free.
+
+Live demo of the dashboard: https://jarvis-184.github.io/agentguard/
+
+Run the tests: `npm test` (guard, 8 checks) and `cd seller && npm test` (22 checks, offline).
 
 ## Safety model
 
