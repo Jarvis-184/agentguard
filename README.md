@@ -1,5 +1,7 @@
 # AgentGuard
 
+[![CI](https://github.com/Jarvis-184/agentguard/actions/workflows/ci.yml/badge.svg)](https://github.com/Jarvis-184/agentguard/actions/workflows/ci.yml)
+
 **Scoped spending authority and a public activity log for AI agents on Celo.**
 
 An AI agent that pays for things needs two things a raw private key can never give it:
@@ -101,7 +103,7 @@ terms: network `eip155:42220` (Celo mainnet), 1000 units (0.001 USDC), and the P
 address above. A buyer signs an EIP-3009 USDC authorization and retries with the x402
 payment header; see `seller/README.md`. `/health`, `/preview` and `/openapi.json` are free.
 
-Live demo of the dashboard: https://jarvis-184.github.io/agentguard/
+Live demo of the dashboard: https://jarvis-184.github.io/agentguard/ . CI (typecheck, tests, `npm audit`) runs on every push.
 
 Run the tests: `npm test` (guard, 8 checks) and `cd seller && npm test` (22 checks, offline).
 
