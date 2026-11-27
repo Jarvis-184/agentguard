@@ -125,7 +125,7 @@ Run the tests: `npm test` (guard, 8 checks) and `cd seller && npm test` (22 chec
 ## Status (27 Nov 2026, honest summary)
 
 - **Live on Celo mainnet:** an x402 seller, `https://agentguard-brief.onrender.com`, sells a Celo market brief for 0.001 USDC per request. PayTo: `0x00D96E0A1b77ff3f6EA5BF5Df1b5A177f75d1319`. The Altana wallet and the ERC-8004 identity (agent #10112) are live on mainnet.
-- **Our own paid calls:** a separate agent wallet made 10 paid calls (0.005 USDT each) to third-party services on `buy`. These are our own calls, not independent users.
+- **Our own paid calls:** a separate agent wallet (`0x1ad700CdB992A3c81f9E1E2DAcea39bB279E55e0`) made 10 paid calls (0.005 USDT each) to the `buy` gateway (pay-to `0x20faAca5F980E29639A0FCC6dcA6988E18ed333B`). These are our own calls to a third-party service, not calls to our seller and not independent users.
 - **Users:** there is no independent user yet. If you run an agent with an ERC-8004 id, one 0.001 USDC call to the seller is all it takes. Feedback and issues are welcome.
 - **Mainnet gap:** `src/agent.ts` settles directly on the chain it is configured for. Its mainnet settlement path through the facilitator is not implemented yet, so `src/agent.ts` has no mainnet payment run. Mainnet activity so far: the seller, one tagged test payment of 0.005 USDT (tx `0xd3977f620eff9e5ea0ef783284916e31916aed6ceb447c64dd198ff523bf4a94`), and the buy calls above.
 - **Testnet:** the Celo Sepolia demo above is the full end-to-end loop; the deny path is covered by unit tests, not live traffic.
