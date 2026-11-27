@@ -10,17 +10,17 @@
     "test": "tsx test/seller.test.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1",
-    "tsx": "^4",
-    "@x402/core": "2.27.0",
-    "@x402/evm": "2.27.0",
-    "@x402/hono": "2.27.0",
+    "@hono/node-server": "^2.1.11",
+    "@x402/core": "^2.32.0",
+    "@x402/evm": "^2.32.0",
+    "@x402/hono": "^2.32.0",
     "hono": "^4",
+    "tsx": "^4",
     "viem": "^2"
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@x402/fetch": "^2.27.0",
+    "@x402/fetch": "^2.32.0",
     "typescript": "^5",
     "wrangler": "^4"
   }
