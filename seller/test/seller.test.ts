@@ -1,10 +1,25 @@
-/** Offline tests: mock facilitator, real x402 buyer client. Run: npm test */
+/** Offline tests: mock facilitator, real x402 buyer client, fixture upstream data. Run: npm test (LIVE=1 npm test uses the real upstream services) */
 import assert from 'node:assert/strict'
 import { x402Client, wrapFetchWithPayment } from '@x402/fetch'
 import { ExactEvmScheme } from '@x402/evm/exact/client'
 import { privateKeyToAccount, generatePrivateKey } from 'viem/accounts'
 import { createApp } from '../src/app.js'
 import { getBrief, _resetBriefCache } from '../src/brief.js'
+
+// Upstream data (Kraken, CoinGecko, Celo RPC) is served from fixtures so the suite runs offline.
+// Set LIVE=1 to hit the real services instead. Any other URL fails loudly in offline mode.
+const liveFetch = globalThis.fetch
+const json = (o: unknown) => new Response(JSON.stringify(o), { status: 200, headers: { 'content-type': 'application/json' } })
+const fixtureFetch = (async (u: any, i: any) => {
+  const url = String(u)
+  const nowS = Math.floor(Date.now() / 1000)
+  if (/kraken/.test(url)) return json({ result: { CELOUSD: Array.from({ length: 40 }, (_, k) => { const t = nowS - (39 - k) * 3600; const px = (0.1 + k * 0.0001).toFixed(4); return [t, px, px, px, px, px, '1', 1] }) } })
+  if (/coingecko/.test(url)) return json({ celo: { usd: 0.1, usd_24h_change: 0.5 } })
+  if (/forno|ankr/.test(url)) return json({ jsonrpc: '2.0', id: 1, result: { number: '0x2dc6c0', timestamp: '0x' + nowS.toString(16), baseFeePerGas: '0x3b9aca00' } })
+  throw new Error('offline test tried a real network call: ' + url)
+}) as typeof fetch
+const realFetch: typeof fetch = process.env.LIVE ? liveFetch : fixtureFetch
+globalThis.fetch = realFetch
 
 const PAYTO = '0x00D96E0A1b77ff3f6EA5BF5Df1b5A177f75d1319'
 const calls: string[] = []
@@ -46,7 +61,6 @@ const hdr = r.headers.get('payment-response'); assert.ok(hdr); assert.match(JSON
 // 5 caching
 _resetBriefCache(); const t1 = await getBrief(1e12); const t2 = await getBrief(1e12 + 1000); assert.equal(t1, t2); ok('brief cached 5 min')
 // 6 upstream failure => 503 and no settle
-const realFetch = globalThis.fetch
 _resetBriefCache()
 globalThis.fetch = (async (u: any, i: any) => (/forno|coingecko|kraken|ankr/.test(String(u)) ? new Response('x', { status: 500 }) : realFetch(u, i))) as any
 calls.length = 0
