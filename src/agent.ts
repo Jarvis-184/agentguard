@@ -94,8 +94,8 @@ if (!verdict.isValid) {
 }
 
 // 4. Settle on-chain: anyone may submit transferWithAuthorization; the
-// operator's key pays the gas. On mainnet this goes through the facilitator's
-// /settle with an API key instead.
+// operator's key pays the gas. This direct settlement is what the Sepolia demo
+// uses. A mainnet path through the facilitator's /settle is not implemented.
 const adminKey = (process.env.ADMIN_PRIVATE_KEY ??
   readFileSync(".agent_admin_key", "utf8").trim()) as `0x${string}`; // owner key: pays settle gas only
 const admin = privateKeyToAccount(adminKey);
