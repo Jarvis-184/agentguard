@@ -9,7 +9,7 @@ both, on Celo.
 - **Provable limits.** The agent acts from a non-custodial [Altana](https://altana.network)
   smart wallet under a session key its owner grants: an allowlist of contracts it may call,
   a per-day spend cap, and an expiry. The policy lives in Altana's onchain Keystore, so any
-  app, explorer, or contract can verify it. The owner can revoke it in one transaction.
+  app, explorer, or contract can verify it. Altana documents one-transaction revocation by the owner (SDK `client.revokeSession`); this repo has no revoke script.
 - **A real job, really paid.** The agent buys data per request over [x402](https://x402.celo.org)
   (HTTP 402) and turns it into a daily market brief for its owner.
   Every payment is signed by the session key, inside its cap, with no human in the loop.
@@ -109,13 +109,13 @@ Run the tests: `npm test` (guard, 8 checks) and `cd seller && npm test` (22 chec
 
 - The **admin key** never leaves the owner's environment and never touches the agent process.
 - The agent only ever sees the **session key**, scoped to: these contracts, this much per day, until this time.
-- Oversized or out-of-policy calls are rejected onchain by the Keystore, not by the agent's good behaviour.
-- Revocation is one transaction from the owner.
+- By Altana's design the Keystore rejects oversized or out-of-policy calls onchain. This repo does not demonstrate that rejection live: `src/guard.ts` mirrors the policy off-chain, and the deny path is covered by unit tests.
+- Revocation: the owner can revoke through the Altana SDK (`client.revokeSession`). Not scripted or demonstrated in this repo.
 
 ## Track requirements map
 
 - Non-custodial Altana wallet under a session key with spend cap, allowlist, expiry: `src/provision.ts`
-- Enforced onchain, revocable in one transaction: Altana Keystore (`src/provision.ts` shows `revokeSession`)
+- Onchain session policy (allowlist, daily cap, expiry): granted with the Altana SDK in `src/provision.ts`. Onchain enforcement and revocation are Altana features that this repo does not demonstrate live.
 - Tagged onchain activity: attribution suffix on settlement txs (`src/tags.ts`)
 - ERC-8004 identity: agent #1047 registered from the wallet on Celo Sepolia
 - Named user with a real job done: no independent user yet (see Status). The agent's job is a paid market brief per request.
@@ -125,6 +125,7 @@ Run the tests: `npm test` (guard, 8 checks) and `cd seller && npm test` (22 chec
 - **Live on Celo mainnet:** an x402 seller, `https://agentguard-brief.onrender.com`, sells a Celo market brief for 0.001 USDC per request. PayTo: `0x00D96E0A1b77ff3f6EA5BF5Df1b5A177f75d1319`. The Altana wallet and the ERC-8004 identity (agent #10112) are live on mainnet.
 - **Our own paid calls:** a separate agent wallet made 10 paid calls (0.005 USDT each) to third-party services on `buy`. These are our own calls, not independent users.
 - **Users:** there is no independent user yet. If you run an agent with an ERC-8004 id, one 0.001 USDC call to the seller is all it takes. Feedback and issues are welcome.
+- **Mainnet gap:** `src/agent.ts` settles directly on the chain it is configured for. Its mainnet settlement path through the facilitator is not implemented yet, so the agent loop has no mainnet payment run. The mainnet activity is the seller and the buy calls above.
 - **Testnet:** the Celo Sepolia demo above is the full end-to-end loop; the deny path is covered by unit tests, not live traffic.
 
 ## License
